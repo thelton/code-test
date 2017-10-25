@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv=X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+  <title>Test</title>
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+  <link rel="stylesheet" href="/css/style.css">
+<body>
+
+<div class="container">
+<div class="row">
+<div id="app">
+  <form v-cloak>
+  <div class="top-bar clearfix">
+    <span class="search pull-right"><input class="form-control" type="text" v-model="search" placeholder="Search..." /></span>
+    <span class="post-count pull-left">{{ results.length }} posts</span>
+  </div>
+  <paginate name="filteredPosts" :list="filteredPosts" :per="6" tag="div" class="paginate-list">
+  <div class="posts col-md-4" v-for="result in paginated('filteredPosts')">
+    <div class="post-wrap">
+    <span>{{ result.data.subreddit }}</span>
+    <h3 v-bind:title="result.data.title">{{ result.data.title | truncate('100') }}</h3>
+    <p v-if="result.data.selftext !== ''">{{ result.data.selftext | truncate('250') }}</p>
+    <div class="thumb" v-if="result.data.thumbnail.includes('https')"><img v-bind:src="result.data.thumbnail" /></div>
+    <span class="user">{{ result.data.author }}</span>
+    <div class="icon-bar">
+      <span v-if="result.data.preview">
+        <lightbox v-bind:src="result.data.preview.images[0]['source'].url">
+          <span class="glyphicon glyphicon-picture" aria-hidden="true"></span>
+        </lightbox>
+      </span>
+      <span class="comments"><span class="glyphicon glyphicon-comment" aria-hidden="true"></span> {{ result.data.num_comments }}</span>
+    </div>
+    </div>
+  </div>
+  </paginate>
+  <paginate-links for="filteredPosts" :show-step-links="true" class="clearfix">
+  <paginate-links for="filteredPosts" :limit="2" :show-step-links="true"></paginate-links>
+  <paginate-links for="filteredPosts" :simple="{
+    next: 'Next',
+    prev: 'Prev'
+  "}</paginate-links>
+  </form>
+</div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="https://rawgit.com/phecko/vue-lightbox/master/dist/vue-lightbox.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.16.2/axios.js"></script>
+<script src="https://rawgit.com/TahaSh/vue-paginate/master/dist/vue-paginate.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+<script>
+Vue.config.devtools = true;
+Vue.component('Lightbox', VueLightbox.VueLightbox);
+
+Vue.filter('truncate', function(string, value) {
+  if (string.length > value) {
+    return string.substring(0, value) + '...';
+  } else {
+    return string;
+  }
+});
+
+  new Vue({
+    el: '#app',
+    data: {
+      results: [],
+      search: '',
+      paginate: ['filteredPosts']
+    },
+    beforeMount() {
+      axios.get("https://www.reddit.com/r/pics/search.json?q=kittens&sort=new")//https://www.reddit.com/r/pics/search.json?q=kittens&sort=new
+      .then(response => {
+        this.results = response.data.data.children;
+      })
+      .catch(error => {
+        this.results = "oops";
+      });
+    },
+    computed: {
+      filteredPosts: function () {
+	var posts_array = this.results,
+	  search = this.search;
+	if(!search) {
+	  return posts_array;
+	}
+	search = search.trim().toLowerCase();
+	posts_array = posts_array.filter(function(item){
+	  if(item.data.title.toLowerCase().indexOf(search) !== -1) {
+	    return item;
+	  }
+	})
+	return posts_array;;
+      }
+    }
+  });
+//https://www.reddit.com/api/v1/authorize?client_id=SxA553OtcmDyHw&response_type=code&state=ah94ptw7&redirect_uri=test.com&duration=temporary&scope=identity
+</script>
+</body>
+</html>
+
